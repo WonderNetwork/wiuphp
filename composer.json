@@ -1,0 +1,23 @@
+{
+    "name": "wondernetwork/wiu-php-client",
+    "description": "A PHP client for the Where's It Up? API",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gemma Anible",
+            "email": "gemma@wonderproxy.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "~5.0",
+        "php": "~5.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "wondernetwork\\wiuphp": "src/"
+        }
+    }
+}
