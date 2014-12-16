@@ -1,5 +1,5 @@
 {
-    "name": "wondernetwork/wiu-php-client",
+    "name": "wondernetwork/wiuphp",
     "description": "A PHP client for the Where's It Up? API",
     "license": "MIT",
     "authors": [
@@ -12,12 +12,16 @@
         "guzzlehttp/guzzle": "~5.0",
         "php": "~5.4"
     },
+    "suggest": {
+        "ext-memcached": "Enables API response caching"
+    },
     "require-dev": {
         "phpunit/phpunit": "~4.4"
     },
     "autoload": {
         "psr-4": {
-            "wondernetwork\\wiuphp": "src/"
+            "wondernetwork\\wiuphp\\": "src/",
+            "wondernetwork\\wiuphp\\tests\\": "tests/"
         }
     }
 }
