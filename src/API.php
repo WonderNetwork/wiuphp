@@ -52,14 +52,14 @@ class API implements APIInterface {
             throw new Exception\ClientException('Requested address is missing or invalid');
         }
 
-        $servers = array_filter($servers, function($server) {
+        $servers = array_values(array_filter($servers, function($server) {
             return preg_match('/^[a-z]+$/', $server);
-        });
+        }));
         if (!$servers) {
             throw new Exception\ClientException('No valid servers requested');
         }
 
-        $tests = array_intersect($this->validTests, $tests);
+        $tests = array_values(array_intersect($this->validTests, $tests));
         if (!$tests) {
             throw new Exception\ClientException('No valid tests requested');
         }
