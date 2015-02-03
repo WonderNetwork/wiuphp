@@ -70,22 +70,11 @@ class APITest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage Unable to load requested address
-     */
-    public function testURLNotFound() {
-        $this->addMockResponse(404);
-        $api = new API('1234', '1234', $this->client);
-        $api->submit('google.com', [], []);
-    }
-
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
      * @expectedExceptionMessage No valid servers requested
      *
      * @dataProvider badServers
      */
     public function testBadServers($servers) {
-        $this->addMockResponse(200);
         $api = new API('1234', '1234', $this->client);
         $api->submit('google.com', $servers, []);
     }
@@ -97,7 +86,6 @@ class APITest extends \PHPUnit_Framework_TestCase {
      * @dataProvider badTests
      */
     public function testBadTests($tests) {
-        $this->addMockResponse(200);
         $api = new API('1234', '1234', $this->client);
         $api->submit('foo', ['bar'], $tests);
     }
@@ -108,7 +96,6 @@ class APITest extends \PHPUnit_Framework_TestCase {
      * @expectedExceptionCode 403
      */
     public function testAPIExceptionOnSubmit() {
-        $this->addMockResponse(200);
         $this->addMockResponse(403, '{"message": "foo bar"}');
 
         $api = new API('1234', '1234', $this->client);
@@ -116,7 +103,6 @@ class APITest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testSubmitSuccess() {
-        $this->addMockResponse(200);
         $this->addMockResponse(200, '{"jobID": "bizbaz"}');
 
         $api = new API('1234', '1234', $this->client);
@@ -130,8 +116,6 @@ class APITest extends \PHPUnit_Framework_TestCase {
      * @dataProvider badIDs
      */
     public function testRetrieveBadID($id) {
-        $this->addMockResponse(200);
-
         $api = new API('1234', '1234', $this->client);
         $api->retrieve($id);
     }

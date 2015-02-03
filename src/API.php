@@ -52,12 +52,6 @@ class API implements APIInterface {
             throw new Exception\ClientException('Requested address is missing or invalid');
         }
 
-        try {
-            $this->client->head($uri);
-        } catch (TransferException $e) {
-            throw new Exception\ClientException('Unable to load requested address');
-        }
-
         $servers = array_filter($servers, function($server) {
             return preg_match('/^[a-z]+$/', $server);
         });
