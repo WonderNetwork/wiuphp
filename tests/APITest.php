@@ -72,6 +72,17 @@ class APITest extends \PHPUnit_Framework_TestCase {
      * @expectedException \wondernetwork\wiuphp\Exception\ClientException
      * @expectedExceptionMessage No valid servers requested
      *
+     * @dataProvider goodURLs
+     */
+    public function testGoodURL($url) {
+        $api = new API('1234', '1234', $this->client);
+        $api->submit($url, [], []);
+    }
+
+    /**
+     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
+     * @expectedExceptionMessage No valid servers requested
+     *
      * @dataProvider badServers
      */
     public function testBadServers($servers) {
@@ -139,6 +150,25 @@ class APITest extends \PHPUnit_Framework_TestCase {
             ['/://:<>this is not a url'],
             ['#$%^&*()(*&^%$#$%^&*()(*&^%$%^&*('],
             [''],
+            ["<script>alert('hi');</script>"],
+            ['php://filter'],
+            ['foo://bar'],
+            ['mailto:person@something'],
+            ['javascript://alert(123)'],
+        ];
+    }
+
+    public function goodURLs() {
+        return [
+            ['google.com'],
+            ['http://google.com'],
+            ['https://google.com'],
+            ['ftp://google.com'],
+            ['google.com/asdf'],
+            ['google.com/asdf?1=2&3=4'],
+            ['google.com/asdf?a[]=1&a[]=2'],
+            ['google.com/asdf?a=this+has+spaces'],
+            ['google.com/asdf?a=this%20has%20spaces'],
         ];
     }
 

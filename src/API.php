@@ -16,6 +16,7 @@ class API implements APIInterface {
     protected $validTests = [
         'dig', 'host', 'ping', 'http', 'fast', 'edge', 'trace', 'shot', 'nametime'
     ];
+    protected $validSchemes = ['https', 'http', 'ftp'];
 
     public function __construct($id, $token, Client $client = null) {
 
@@ -42,13 +43,17 @@ class API implements APIInterface {
     }
 
     public function submit($uri, array $servers, array $tests, array $options = []) {
-        $uri = filter_var($uri, FILTER_SANITIZE_URL);
-        $parsed = parse_url($uri);
-        if ($parsed && !isset($parsed['scheme'])) {
-            $uri = 'http://'.$uri;
-            $parsed = parse_url($uri);
+        $uri = strip_tags($uri);
+        if (!filter_var($uri, FILTER_VALIDATE_URL)) {
+            $uri = filter_var('http://'.$uri, FILTER_VALIDATE_URL);
         }
-        if ($parsed === false || !isset($parsed['host'])) {
+
+        if (
+            !$uri
+            || ($parsed = parse_url($uri)) === false
+            || !isset($parsed['host'])
+            || !in_array($parsed['scheme'], $this->validSchemes)
+        ) {
             throw new Exception\ClientException('Requested address is missing or invalid');
         }
 
