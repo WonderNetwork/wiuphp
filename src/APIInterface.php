@@ -21,6 +21,14 @@ interface APIInterface {
      */
     public function submit($uri, array $servers, array $tests, array $options = []);
 
+    /** Submit a new job using raw JSON
+     *
+     * @param $request
+     *
+     * @return string the ID of the job submitted
+     */
+    public function submitRaw($request);
+
     /** Get the results of a job
      *
      * @param string $id

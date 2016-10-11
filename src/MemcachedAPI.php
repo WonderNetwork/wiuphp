@@ -31,6 +31,10 @@ class MemcachedAPI implements APIInterface {
         return $this->api->submit($uri, $servers, $tests, $options);
     }
 
+    public function submitRaw($request) {
+        return $this->api->submitRaw($request);
+    }
+
     public function retrieve($id) {
         $key = self::NS.'job_'.$id;
 
@@ -47,4 +51,4 @@ class MemcachedAPI implements APIInterface {
         return $job;
     }
 }
- 
+

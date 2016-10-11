@@ -145,6 +145,109 @@ class APITest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(['foo', 'bar'], $api->servers());
     }
 
+    /**
+     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
+     * @expectedExceptionMessage Raw request must be a string
+     *
+     * @dataProvider invalidRaw
+     */
+    public function testSubmitRawRequiresString($request) {
+        $api = new API('1234', '1234', $this->client);
+        $api->submitRaw($request);
+    }
+
+    public function invalidRaw() {
+        return [
+            [null],
+            [false],
+            [true],
+            [1234],
+            [[]],
+            [(object) []],
+        ];
+    }
+
+    /**
+     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
+     * @expectedExceptionMessage Failed to decode raw request JSON
+     *
+     * @dataProvider invalidRawString
+     */
+    public function testSubmitRawRequiresValidJSON($request) {
+        $api = new API('1234', '1234', $this->client);
+        $api->submitRaw($request);
+    }
+
+    public function invalidRawString() {
+        return [
+            [''],
+            ['asdf'],
+            ['"asdf"'],
+            ['this {} is not valid'],
+            ['{ also not valid }'],
+            ['[ continuing to be invalid ]'],
+            ['false'],
+        ];
+    }
+
+    /**
+     * @dataProvider rawRequest
+     */
+    public function testSubmitRawForwardsRequest(
+        $request,
+        $uri,
+        $servers,
+        $tests,
+        $options
+    ) {
+        $api = $this->getMockBuilder('\wondernetwork\wiuphp\API')
+                    ->disableOriginalConstructor()
+                    ->setMethods(['submit'])
+                    ->getMock();
+        $api->expects($this->once())
+            ->method('submit')
+            ->with($uri, $servers, $tests, $options);
+
+        $api->submitRaw($request);
+    }
+
+    public function rawRequest() {
+        return [
+            ['[]', '', [], [], []],
+            ['{}', '', [], [], []],
+            ['{ "unrecognized": "things" }', '', [], [], []],
+            ['{ "uri": "foo" }', 'foo', [], [], []],
+            ['{ "uri": "foo" }', 'foo', [], [], []],
+            ['{ "uri": "" }', '', [], [], []],
+            ['{ "options": "invalid" }', '', [], [], []],
+            ['{ "tests": "invalid" }', '', [], [], []],
+            ['{ "sources": "invalid" }', '', [], [], []],
+            ['{ "sources": [] }', '', [], [], []],
+            ['{ "sources": [1, 2] }', '', [1, 2], [], []],
+            ['{ "tests": [1, 2] }', '', [], [1, 2], []],
+            ['{ "options": [1, 2] }', '', [], [], [1, 2]],
+            ['{ "options": { "things": "stuff" } }', '', [], [], ['things' => 'stuff']],
+            [
+                '{
+                "uri": "google.com",
+                "tests": ["dig", "host"],
+                "sources": ["chicago", "denver"],
+                "options": {
+                  "expire_after": "3 days",
+                  "timeout": 60,
+                  "dig": {
+                    "nameserver": "localhost"
+                  }
+                }
+                }',
+                'google.com',
+                ['chicago', 'denver'],
+                ['dig', 'host'],
+                ['expire_after' => '3 days', 'timeout' => 60, 'dig' => ['nameserver' => 'localhost']]
+            ],
+        ];
+    }
+
     public function badURLs() {
         return [
             ['/://:<>this is not a url'],

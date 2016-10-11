@@ -80,6 +80,25 @@ class API implements APIInterface {
         return $response['jobID'];
     }
 
+    public function submitRaw($request) {
+        if (!is_string($request)) {
+            throw new Exception\ClientException('Raw request must be a string');
+        }
+
+        if (is_null($request = json_decode($request, true)) || !is_array($request)) {
+            throw new Exception\ClientException('Failed to decode raw request JSON');
+        }
+
+        $this->submit(
+            isset($request['uri']) ? $request['uri'] : '',
+            isset($request['sources']) && is_array($request['sources']) ? $request['sources'] : [],
+            isset($request['tests']) && is_array($request['tests']) ? $request['tests'] : [],
+            isset($request['options']) && is_array($request['options']) ? $request['options'] : []
+
+        );
+    }
+
+
     public function retrieve($id) {
         if (!ctype_xdigit($id)) {
             throw new Exception\ClientException('Job ID is invalid');
