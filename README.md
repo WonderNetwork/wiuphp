@@ -10,12 +10,16 @@ wiuphp is a PHP wrapper for the [Where's It Up API](https://api.wheresitup.com)
 
 # Installation
 
-This API client is packaged with Composer, so you can use Composer to add it to
-your project:
+This API client is packaged with [Composer](https://getcomposer.org/), so you
+can use Composer to add it to your project:
 
 ```
 $ composer require wondernetwork/wiuphp
 ```
+
+If you're not sure what Composer is, you can read more about it at [PHP: The
+Right Way](https://phptherightway.com/#composer_and_packagist), and in the
+[official documentation](https://getcomposer.org/doc/00-intro.md).
 
 # Usage
 
