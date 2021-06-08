@@ -3,49 +3,45 @@
 namespace wondernetwork\wiuphp\tests;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\TestCase;
 use wondernetwork\wiuphp\API;
+use wondernetwork\wiuphp\Exception\APIException;
+use wondernetwork\wiuphp\Exception\ClientException;
 
-class APITest extends \PHPUnit_Framework_TestCase {
-    /** @var Client */
-    protected $client;
-    /** @var Mock */
-    protected $mock;
+class APITest extends TestCase {
+    protected Client $client;
+    protected HandlerStack $stack;
 
-    public function setUp() {
-        $this->client = new Client(['base_url' => 'foo']);
-        $this->mock = new Mock();
-
-        $this->client->getEmitter()->attach($this->mock);
+    public function setUp(): void {
+        $this->stack = new HandlerStack();
+        $this->client = new Client(['base_uri' => 'foo', 'handler' => $this->stack]);
     }
 
     public function addMockResponse($status, $body = '') {
-        $this->mock->addResponse(new Response($status, [], Stream::factory($body)));
+        $this->stack->setHandler(MockHandler::createWithMiddleware([new Response($status, [], $body)]));
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage User credentials are invalid
-     */
     public function testInvalidID() {
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('User credentials are invalid');
+
         new API('this is not hex', '1234');
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage User credentials are invalid
-     */
     public function testInvalidToken() {
+        $this->expectExceptionMessage("User credentials are invalid");
+        $this->expectException(ClientException::class);
+
         new API('1234', 'this is also not hex');
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage API client is not configured with a base URL
-     */
     public function testBadClient() {
+        $this->expectExceptionMessage("API client is not configured with a base URL");
+        $this->expectException(ClientException::class);
+
         $client = new Client();
         new API('1234', '1234', $client);
     }
@@ -53,60 +49,50 @@ class APITest extends \PHPUnit_Framework_TestCase {
     public function testAuthHeaderSet() {
         $api = new API('1234', '4321', $this->client);
 
-        $headers = $this->client->getDefaultOption('headers');
+        $headers = $api->getClientConfig('headers');
         $this->assertEquals('Bearer 1234 4321', $headers['Auth']);
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage Requested address is missing or invalid
-     *
-     * @dataProvider badURLs
-     */
+    /** @dataProvider badURLs */
     public function testBadURL($url) {
+        $this->expectExceptionMessage("Requested address is missing or invalid");
+        $this->expectException(ClientException::class);
+
         $api = new API('1234', '1234', $this->client);
         $api->submit($url, [], []);
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage No valid servers requested
-     *
-     * @dataProvider goodURLs
-     */
+    /** @dataProvider goodURLs */
     public function testGoodURL($url) {
+        $this->expectExceptionMessage("No valid servers requested");
+        $this->expectException(ClientException::class);
+
         $api = new API('1234', '1234', $this->client);
         $api->submit($url, [], []);
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage No valid servers requested
-     *
-     * @dataProvider badServers
-     */
+    /** @dataProvider badServers */
     public function testBadServers($servers) {
+        $this->expectExceptionMessage("No valid servers requested");
+        $this->expectException(ClientException::class);
+
         $api = new API('1234', '1234', $this->client);
         $api->submit('google.com', $servers, []);
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage No valid tests requested
-     *
-     * @dataProvider badTests
-     */
+    /** @dataProvider badTests */
     public function testBadTests($tests) {
+        $this->expectExceptionMessage("No valid tests requested");
+        $this->expectException(ClientException::class);
         $api = new API('1234', '1234', $this->client);
         $api->submit('foo', ['bar'], $tests);
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\APIException
-     * @expectedExceptionMessage Bad response from the WIU API (HTTP status 403): foo bar
-     * @expectedExceptionCode 403
-     */
     public function testAPIExceptionOnSubmit() {
+        $this->expectExceptionCode(403);
+        $this->expectExceptionMessage("Bad response from the WIU API (HTTP status 403): foo bar");
+        $this->expectException(APIException::class);
+
         $this->addMockResponse(403, '{"message": "foo bar"}');
 
         $api = new API('1234', '1234', $this->client);
@@ -120,13 +106,10 @@ class APITest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals("bizbaz", $api->submit('foo', ['bar'], ['dig']));
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage Job ID is invalid
-     *
-     * @dataProvider badIDs
-     */
+    /** @dataProvider badIDs */
     public function testRetrieveBadID($id) {
+        $this->expectExceptionMessage("Job ID is invalid");
+        $this->expectException(ClientException::class);
         $api = new API('1234', '1234', $this->client);
         $api->retrieve($id);
     }
@@ -145,13 +128,10 @@ class APITest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(['foo', 'bar'], $api->servers());
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage Raw request must be a string
-     *
-     * @dataProvider invalidRaw
-     */
+    /** @dataProvider invalidRaw */
     public function testSubmitRawRequiresString($request) {
+        $this->expectExceptionMessage("Raw request must be a string");
+        $this->expectException(ClientException::class);
         $api = new API('1234', '1234', $this->client);
         $api->submitRaw($request);
     }
@@ -167,13 +147,10 @@ class APITest extends \PHPUnit_Framework_TestCase {
         ];
     }
 
-    /**
-     * @expectedException \wondernetwork\wiuphp\Exception\ClientException
-     * @expectedExceptionMessage Failed to decode raw request JSON
-     *
-     * @dataProvider invalidRawString
-     */
+    /** @dataProvider invalidRawString */
     public function testSubmitRawRequiresValidJSON($request) {
+        $this->expectExceptionMessage("Failed to decode raw request JSON");
+        $this->expectException(ClientException::class);
         $api = new API('1234', '1234', $this->client);
         $api->submitRaw($request);
     }
@@ -190,9 +167,7 @@ class APITest extends \PHPUnit_Framework_TestCase {
         ];
     }
 
-    /**
-     * @dataProvider rawRequest
-     */
+    /** @dataProvider rawRequest */
     public function testSubmitRawForwardsRequest(
         $request,
         $uri,

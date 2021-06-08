@@ -12,7 +12,7 @@ class APIException extends Exception {
         }
 
         $response = $e->getResponse();
-        $body = $response->json();
+        $body = json_decode($response->getBody(), true);
         $message = isset($body['message'])
             ? $body['message']
             : $response->getReasonPhrase();

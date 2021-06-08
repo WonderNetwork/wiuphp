@@ -5,37 +5,41 @@ namespace wondernetwork\wiuphp;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\TransferException;
+use GuzzleHttp\RequestOptions;
 use wondernetwork\wiuphp\Exception;
 
 class API implements APIInterface {
     const ENDPOINT = 'https://api.wheresitup.com/v4/';
 
-    protected $client;
-    protected $auth;
-    protected $validTests = [
+    protected Client $client;
+    protected array $validTests   = [
         'dig', 'host', 'ping', 'http', 'fast', 'edge', 'trace', 'shot', 'nametime'
     ];
-    protected $validSchemes = ['https', 'http', 'ftp'];
+    protected array $validSchemes = ['https', 'http', 'ftp'];
 
     public function __construct($id, $token, Client $client = null) {
 
         if (!$client) {
-            $client = new Client(['base_url' => self::ENDPOINT]);
+            $client = new Client(['base_uri' => self::ENDPOINT]);
         }
 
-        if (!$client->getBaseUrl()) {
+        if (!$client->getConfig('base_uri')) {
             throw new Exception\ClientException('API client is not configured with a base URL');
         }
         if (!ctype_xdigit($id) || !ctype_xdigit($token)) {
             throw new Exception\ClientException('User credentials are invalid');
         }
 
-        $client->setDefaultOption('headers', [
+        $config = $client->getConfig();
+        $config['headers'] = [
             'Auth' => "Bearer $id $token",
             'User-Agent' => 'WIU PHP Client/1.0'
-        ]);
-        $this->client = $client;
+        ];
+        $this->client = new Client($config);
+    }
+
+    public function getClientConfig(string $config) {
+        return $this->client->getConfig($config);
     }
 
     public function servers() {
@@ -114,18 +118,18 @@ class API implements APIInterface {
             throw new Exception\APIException($e);
         }
 
-        return $response->json();
+        return json_decode($response->getBody(), true);
     }
 
     protected function post($endpoint, $data) {
         try {
             $response = $this->client->post($endpoint, [
-                'json' => $data,
+                RequestOptions::JSON => $data,
             ]);
         } catch (BadResponseException $e) {
             throw new Exception\APIException($e);
         }
 
-        return $response->json();
+        return json_decode($response->getBody(), true);
     }
 }
